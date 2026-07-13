@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.calibration import CalibratedClassifierCV
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 # ----- Constants -----
 grade_map = {'A':4,'B':3,'C':2,'D':1,'E':0.5,'F':0}
@@ -186,6 +187,11 @@ def page1():
         df = pd.read_csv(uploaded_file)
         st.session_state['uploaded_df'] = df
         st.dataframe(df.head())
+
+        missing_vals = df.isnull().sum()
+        if missing_vals.any():
+            st.warning("The amount of missing values in each column is as follows:")
+            st.write(missing_vals.head())
     else:
         st.info("Please upload a CSV file to proceed.")
 
@@ -223,14 +229,40 @@ def page2():
     st.pyplot(fig)
 
 def page3():
-    st.title("Empty Page for possible future additions")
-    st.write("Analysis and graphs of the trajectory of student data")
+    st.title("Graphical Analysis of Student Data")
+    st.write("Analysis and graphs of student data")
     
     if 'uploaded_df' not in st.session_state:
         st.warning("Please upload a CSV file in the Home Page to see analytics.")
         return
         
-    st.info("Additional predictive analytics can be placed here based on the scored data.")
+    student_ids = st.session_state['uploaded_df']['Student_ID'].unique()
+    selected_student = st.selectbox("Select a Student ID to view their trajectory", student_ids)
+    data_choice = st.selectbox("Select Data Type to Visualize", ['Weekly_Attendance', 'Weekly_Logins', 'Quizzes', 'Programming_Projects'])
+    student_id_row = st.session_state['uploaded_df'][st.session_state['uploaded_df']['Student_ID'] == selected_student]
+    attendance = parse_list(student_id_row["Weekly_Attendance"].values[0])
+    logins = parse_list(student_id_row["Weekly_Logins"].values[0])
+    quiz_grades = list_numeric_grades(parse_list(student_id_row["Quizzes"].values[0]))
+    programming_projects = list_numeric_grades(parse_list(student_id_row["Programming_Projects"].values[0]))
+
+    # Create the plotly graph based on the selected data type and the student id
+
+    fig = go.Figure()
+    if data_choice == 'Weekly_Attendance':
+        fig.add_trace(go.Scatter(x = list(range(1, len(attendance)+1)), y=attendance, mode = 'lines+markers', name = 'Attendance'))
+        fig.update_layout(title =f"Weekly Attendance for Student {selected_student}", xaxis_title = 'Week', yaxis_title = 'Attendance')
+    elif data_choice == 'Weekly_Logins':
+        fig.add_trace(go.Scatter(x = list(range(1, len(logins)+1)), y = logins, mode = 'lines+markers', name = 'Logins'))
+        fig.update_layout(title =f"Weekly Logins for Student {selected_student}", xaxis_title = 'Week', yaxis_title = 'Logins')
+    elif data_choice == 'Quizzes':
+        fig.add_trace(go.Scatter(x=list(range(1, len(quiz_grades)+1)), y = quiz_grades, mode = 'lines+markers', name = 'Quizzes'))
+        fig.update_layout(title =f"Weekly Quiz Grades for Student {selected_student}", xaxis_title = 'Week', yaxis_title = 'Quiz Grades')
+    elif data_choice == 'Programming_Projects':
+        fig.add_trace(go.Scatter(x=list(range(1, len(programming_projects)+1)), y = programming_projects, mode = 'lines+markers', name = 'Programming Projects'))
+        fig.update_layout(title =f"Weekly Programming Projects for Student {selected_student}", xaxis_title = 'Week', yaxis_title = 'Programming Projects')
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 # ----- App Execution -----
 if __name__ == "__main__":
@@ -238,6 +270,6 @@ if __name__ == "__main__":
     pg = st.navigation([
         st.Page(page1, title="Home Page"), 
         st.Page(page2, title="Current Data Analysis"), 
-        st.Page(page3, title="3rd Page (Empty)")
+        st.Page(page3, title="Graphical Analysis of Student Data")
     ])
     pg.run()
