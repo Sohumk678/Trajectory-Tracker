@@ -263,6 +263,29 @@ def page3():
 
     st.plotly_chart(fig, use_container_width=True)
 
+    cal_rf, classes = train_model()
+    if cal_rf is None:
+        return
+    scored_df = score_dataframe(st.session_state['uploaded_df'], cal_rf, classes)
+    student = scored_df[scored_df["Student_ID"] == selected_student].iloc[0]
+    st.subheader("AI Recommendation")
+
+    st.metric("Predicted Status", student["Predicted_Label"])
+
+    st.write("Recommendation")
+    st.success(student["ML_Recommendation"])
+
+    st.write("Instructor Note")
+    st.info(student["ML_Instructor_Note"])
+
+    st.write("Prediction Probabilities")
+    st.write(f"Crisis: {student['Prob_Crisis']:.1%}")
+    st.write(f"Drift: {student['Prob_Drift']:.1%}")
+    st.write(f"Normal: {student['Prob_Normal']:.1%}")
+
+def page4():
+    st.title("Wellness Tracker")
+
 
 # ----- App Execution -----
 if __name__ == "__main__":
