@@ -293,6 +293,7 @@ if __name__ == "__main__":
     pg = st.navigation([
         st.Page(page1, title="Home Page"), 
         st.Page(page2, title="Current Data Analysis"), 
-        st.Page(page3, title="Graphical Analysis of Student Data")
+        st.Page(page3, title="Graphical Analysis of Student Data"),
+        st.Page(page4, title="Wellness Tracker")
     ])
     pg.run()
